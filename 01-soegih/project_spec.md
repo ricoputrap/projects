@@ -32,7 +32,7 @@ Manages wallets, expense/income categories, and transactions (expense, income, t
 | ORM | Prisma |
 | Database | Postgres via Supabase |
 | Auth | JWT (single user in DB) |
-| AI Model | Claude API (`claude-sonnet-4-6`) via LangChain |
+| AI Model | OpenAI API (`gpt-4o-mini`) via LangChain |
 | Logging | Pino via `nestjs-pino` |
 | Reverse proxy | Caddy (auto HTTPS) |
 | Deployment | Docker Compose on VPS |
