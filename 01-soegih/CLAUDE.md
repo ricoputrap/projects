@@ -33,6 +33,26 @@ Follow these exactly (from project_spec.md section 8):
 - Transactions: server-side pagination/sorting; Wallets/Categories: client-side via TanStack Table
 - Soft deletion standard: all tables have `deleted_at`, uniqueness via partial indexes
 
+## Transaction Editing Constraints
+
+Users can edit transactions, but with strict limits:
+
+**Editable Fields:**
+- `note` — Change transaction description
+- `category_id` — Change category (expense/income only; must be NULL for transfer)
+- `amount` — Change transaction amount (recalculates postings and wallet balances)
+- `wallet_id` — Change source wallet (for expense/income, or source for transfer)
+
+**Immutable Fields (Locked after creation):**
+- `type` — Cannot change between expense/income/transfer
+- `occurred_at` — Cannot change transaction date
+
+**Implementation:**
+- PATCH `/api/v1/transactions/{id}` endpoint with validation
+- Reject if `type` or `occurred_at` in request body
+- For amount changes: reverse original posting, create new with delta
+- Ensure category_id aligns with transaction type (required for expense/income, NULL for transfer)
+
 ## Logging
 
 - Use `nestjs-pino` with JSON format from spec section 7

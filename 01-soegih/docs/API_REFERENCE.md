@@ -236,6 +236,43 @@ Content-Type: application/json
 
 ---
 
+### Update Transaction (Limited Fields Only)
+
+```
+PATCH /transactions/{id}
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "amount": 55.00,
+  "wallet_id": "wallet-uuid-1",
+  "category_id": "cat-uuid-2",
+  "note": "Dinner at new restaurant"
+}
+```
+
+**Editable fields:**
+- `amount` — Update transaction amount (reverses original posting, creates new with delta)
+- `wallet_id` — Change wallet (source for expense/income, or source for transfer)
+- `category_id` — Change category (expense/income only; NULL for transfer)
+- `note` — Update note text
+
+**Non-editable fields (locked after creation):**
+- `type` — Cannot change between expense/income/transfer
+- `occurred_at` — Cannot change transaction date
+
+**Response:** Updated transaction object with recalculated postings.
+
+**Validation:**
+- `type` must remain the same (expense/income/transfer cannot change)
+- If `type` is transfer, `destination_wallet_id` is immutable
+- For expense/income, `category_id` is required
+- For transfer, `category_id` must be NULL
+- Wallet must belong to authenticated user
+- Amount must be positive
+
+---
+
 ### Delete Transaction (Soft Delete)
 
 ```

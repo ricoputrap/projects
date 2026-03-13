@@ -154,10 +154,10 @@ Database schema and entity relationships. Auto-generated from [backend/prisma/sc
 | Column | Type | Constraints | Notes |
 |--------|------|-------------|-------|
 | `id` | UUID | PK, DEFAULT uuid() | |
-| `type` | Enum | NOT NULL | expense \| income \| transfer |
-| `note` | String | NULL | User-provided note ("coffee at Starbucks") |
-| `category_id` | UUID | FK → category.id, NULL | Required for expense/income, NULL for transfer |
-| `occurred_at` | DateTime | NOT NULL | When transaction happened |
+| `type` | Enum | NOT NULL, **IMMUTABLE** | expense \| income \| transfer (locked after creation) |
+| `note` | String | NULL | User-provided note ("coffee at Starbucks") — **EDITABLE** |
+| `category_id` | UUID | FK → category.id, NULL | Required for expense/income, NULL for transfer — **EDITABLE** |
+| `occurred_at` | DateTime | NOT NULL, **IMMUTABLE** | When transaction happened (locked after creation) |
 | `created_at` | DateTime | NOT NULL, DEFAULT now() | |
 | `updated_at` | DateTime | NOT NULL, DEFAULT now() | |
 | `deleted_at` | DateTime | NULL | Soft delete |
@@ -165,6 +165,14 @@ Database schema and entity relationships. Auto-generated from [backend/prisma/sc
 **Relationships:**
 - N:1 with `category` (optional)
 - 1:N with `posting`
+
+**Mutable Fields (User can edit after creation):**
+- `note` — Can change at any time
+- `category_id` — Can change if transaction type allows (expense/income only, must be NULL for transfer)
+
+**Immutable Fields (Locked after creation):**
+- `type` — Cannot change between expense/income/transfer
+- `occurred_at` — Transaction date is permanent
 
 **Notes:**
 - A single logical transaction (e.g., "spent $50 on food")
@@ -183,8 +191,8 @@ Database schema and entity relationships. Auto-generated from [backend/prisma/sc
 |--------|------|-------------|-------|
 | `id` | UUID | PK, DEFAULT uuid() | |
 | `event_id` | UUID | FK → transaction_event.id, NOT NULL | |
-| `wallet_id` | UUID | FK → wallet.id, NOT NULL | |
-| `amount` | Decimal(15,2) | NOT NULL | Signed: negative for debits, positive for credits |
+| `wallet_id` | UUID | FK → wallet.id, NOT NULL | **EDITABLE** (via transaction update) |
+| `amount` | Decimal(15,2) | NOT NULL | Signed; **EDITABLE** (via transaction update) |
 | `created_at` | DateTime | NOT NULL, DEFAULT now() | |
 | `updated_at` | DateTime | NOT NULL, DEFAULT now() | |
 | `deleted_at` | DateTime | NULL | Soft delete |
@@ -193,6 +201,10 @@ Database schema and entity relationships. Auto-generated from [backend/prisma/sc
 - N:1 with `transaction_event`
 - N:1 with `wallet`
 
+**Editable via Transaction Update:**
+- `wallet_id` — Can change source wallet for expense/income, or source wallet for transfer
+- `amount` — Can change transaction amount (triggers balance reversal and recalculation)
+
 **Notes:**
 - Represents a single wallet impact within a transaction
 - Amount is signed:
@@ -200,7 +212,8 @@ Database schema and entity relationships. Auto-generated from [backend/prisma/sc
   - **Income**: positive (e.g., 1000.00)
   - **Transfer source**: negative (e.g., -100.00)
   - **Transfer destination**: positive (e.g., 100.00)
-- Wallet balance is updated **atomically** when posting is created
+- Wallet balance is updated **atomically** when posting is created or updated
+- When transaction amount changes: original posting is reversed (balance adjustment), new posting created with delta
 - Soft deleted when transaction is deleted; balance is reversed
 
 ---

@@ -667,9 +667,25 @@ git commit -m "feat(backend): add Supabase JWT validation guard"
 
 ## Chunk 4: Backend — Transactions & Dashboard
 
-### Task 11: Transaction Module (TDD)
+### Task 11: Transaction Module (TDD) with Create, Update, List, Delete
 
-(Same as original plan — no auth changes needed. Use `@UseGuards(SupabaseJwtGuard)` on the controller.)
+**Files:**
+- Create: `backend/src/modules/transaction/dto/create-transaction.dto.ts`
+- Create: `backend/src/modules/transaction/dto/update-transaction.dto.ts`
+- Create: `backend/src/modules/transaction/transaction.service.ts`
+- Create: `backend/src/modules/transaction/transaction.service.spec.ts`
+- Create: `backend/src/modules/transaction/transaction.controller.ts`
+- Create: `backend/src/modules/transaction/transaction.module.ts`
+
+**Key Constraints:**
+- Create: Full control over type, amount, wallet, category, note, date
+- **Update: Limited to note, category, amount, and wallet_id ONLY**
+  - Cannot change `type` (expense ↔ income ↔ transfer) — locked after creation
+  - Cannot change `occurred_at` (date) — locked after creation
+  - Amount changes: Reverse original posting, create new posting with delta
+- Delete: Soft delete with balance reversal (existing behavior)
+
+Use `@UseGuards(SupabaseJwtGuard)` on all controller methods.
 
 ---
 
@@ -1076,7 +1092,25 @@ git commit -m "feat(frontend): add Supabase Auth, layout, and TanStack Router fi
 
 ### Task 17-19: Wallet, Category, Transaction Modules (Frontend)
 
-(Same as original plan — no auth changes needed. Import from shared API client.)
+**Task 17 (Wallet):** Same as original plan — no auth changes needed. Import from shared API client.
+
+**Task 18 (Category):** Same as original plan — no auth changes needed. Import from shared API client.
+
+**Task 19 (Transaction):** Same as original plan, PLUS add transaction editing with constraints:
+- Add **TransactionEditModal** or **TransactionEditForm** component
+- Display transaction in list with "Edit" button
+- Modal/form shows only editable fields:
+  - Note (text input)
+  - Category (dropdown — expense/income only, NULL for transfer)
+  - Amount (number input)
+  - Wallet (dropdown — source wallet)
+- Gray out/hide immutable fields:
+  - Type (expense/income/transfer) — locked
+  - Occurred_at (date) — locked
+  - Destination_wallet (for transfer) — locked
+- Call PATCH `/api/v1/transactions/{id}` on save
+- Show validation errors if category doesn't match type
+- Refresh transaction list after update
 
 ---
 
