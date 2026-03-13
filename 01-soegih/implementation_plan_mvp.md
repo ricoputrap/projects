@@ -1,4 +1,4 @@
-# Soegih MVP Implementation Plan
+# Soegih MVP Implementation Plan — Test-Driven Development
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -608,14 +608,14 @@ git commit -m "feat(backend): add PrismaService, Pino logging, and global except
 
 ---
 
-### Task 8: Auth Module
+### Task 8: Auth Module (TDD)
 
 **Files:**
 - Create: `backend/src/modules/auth/dto/login.dto.ts`
-- Create: `backend/src/modules/auth/strategies/jwt.strategy.ts`
-- Create: `backend/src/common/guards/jwt-auth.guard.ts`
 - Create: `backend/src/modules/auth/auth.service.ts`
 - Create: `backend/src/modules/auth/auth.service.spec.ts`
+- Create: `backend/src/modules/auth/strategies/jwt.strategy.ts`
+- Create: `backend/src/common/guards/jwt-auth.guard.ts`
 - Create: `backend/src/modules/auth/auth.controller.ts`
 - Create: `backend/src/modules/auth/auth.module.ts`
 
@@ -630,7 +630,7 @@ export class LoginDto {
 }
 ```
 
-- [ ] **Step 2: Write failing test**
+- [ ] **Step 2: Write unit tests (TDD — red)**
 
 ```typescript
 // auth.service.spec.ts
@@ -678,14 +678,15 @@ describe('AuthService', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **Step 3: Run tests to verify they fail (red)**
 
 ```bash
 cd backend && pnpm test -- auth.service.spec
 ```
+
 Expected: FAIL — `AuthService` not found.
 
-- [ ] **Step 4: Create auth.service.ts**
+- [ ] **Step 4: Implement auth.service.ts (green)**
 
 ```typescript
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -707,11 +708,12 @@ export class AuthService {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Step 5: Run tests to verify they pass (green)**
 
 ```bash
 cd backend && pnpm test -- auth.service.spec
 ```
+
 Expected: PASS — 3 tests passing.
 
 - [ ] **Step 6: Create jwt.strategy.ts**
@@ -804,14 +806,14 @@ Add `AuthModule` to `app.module.ts` imports.
 
 ```bash
 git add backend/src/modules/auth/ backend/src/common/
-git commit -m "feat(backend): add auth module with JWT login"
+git commit -m "feat(backend): add auth module with JWT login (TDD)"
 ```
 
 ---
 
 ## Chunk 3: Backend — Wallets & Categories
 
-### Task 9: Wallet Module
+### Task 9: Wallet Module (TDD)
 
 **Files:**
 - Create: `backend/src/modules/wallet/dto/create-wallet.dto.ts`
@@ -841,7 +843,7 @@ import { CreateWalletDto } from './create-wallet.dto';
 export class UpdateWalletDto extends PartialType(CreateWalletDto) {}
 ```
 
-- [ ] **Step 2: Write failing tests**
+- [ ] **Step 2: Write unit tests (TDD — red)**
 
 ```typescript
 // wallet.service.spec.ts
@@ -884,14 +886,15 @@ describe('WalletService', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **Step 3: Run tests to verify they fail (red)**
 
 ```bash
 cd backend && pnpm test -- wallet.service.spec
 ```
+
 Expected: FAIL — `WalletService` not found.
 
-- [ ] **Step 4: Create wallet.service.ts**
+- [ ] **Step 4: Implement wallet.service.ts (green)**
 
 ```typescript
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -929,11 +932,12 @@ export class WalletService {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Step 5: Run tests to verify they pass (green)**
 
 ```bash
 cd backend && pnpm test -- wallet.service.spec
 ```
+
 Expected: PASS — 3 tests passing.
 
 - [ ] **Step 6: Create wallet.controller.ts**
@@ -958,7 +962,7 @@ export class WalletController {
 }
 ```
 
-- [ ] **Step 7: Create wallet.module.ts, register in AppModule**
+- [ ] **Step 7: Create wallet.module.ts**
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -975,15 +979,15 @@ Add `WalletModule` to `app.module.ts` imports.
 
 ```bash
 git add backend/src/modules/wallet/
-git commit -m "feat(backend): add wallet module"
+git commit -m "feat(backend): add wallet module (TDD)"
 ```
 
 ---
 
-### Task 10: Category Module
+### Task 10: Category Module (TDD)
 
 **Files:**
-- Create: `backend/src/modules/category/` (same structure as wallet)
+- Create: `backend/src/modules/category/` (same TDD structure as wallet)
 
 - [ ] **Step 1: Create DTOs**
 
@@ -1006,7 +1010,7 @@ import { CreateCategoryDto } from './create-category.dto';
 export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {}
 ```
 
-- [ ] **Step 2: Write failing tests**
+- [ ] **Step 2: Write unit tests (TDD — red)**
 
 ```typescript
 // category.service.spec.ts
@@ -1048,34 +1052,45 @@ describe('CategoryService', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **Step 3: Run tests to verify they fail (red)**
 
 ```bash
 cd backend && pnpm test -- category.service.spec
 ```
 
-- [ ] **Step 4: Create category.service.ts** (mirror wallet.service.ts, replacing `wallet` → `category`)
+- [ ] **Step 4: Implement category.service.ts (green)**
 
-- [ ] **Step 5: Run tests to verify they pass**
+Mirror wallet.service.ts, replacing `wallet` → `category`.
+
+- [ ] **Step 5: Run tests to verify they pass (green)**
 
 ```bash
 cd backend && pnpm test -- category.service.spec
 ```
 
-- [ ] **Step 6: Create category.controller.ts and category.module.ts** (mirror wallet controller/module pattern). Register `CategoryModule` in `app.module.ts`.
+- [ ] **Step 6: Create category.controller.ts and category.module.ts**
+
+Mirror wallet controller/module pattern. Register `CategoryModule` in `app.module.ts`.
 
 - [ ] **Step 7: Commit**
 
 ```bash
 git add backend/src/modules/category/
-git commit -m "feat(backend): add category module"
+git commit -m "feat(backend): add category module (TDD)"
 ```
 
 ---
 
 ## Chunk 4: Backend — Transactions & Dashboard
 
-### Task 11: Transaction Module
+### Task 11: Transaction Module (TDD)
+
+**Files:**
+- Create: `backend/src/modules/transaction/dto/create-transaction.dto.ts`
+- Create: `backend/src/modules/transaction/transaction.service.ts`
+- Create: `backend/src/modules/transaction/transaction.service.spec.ts`
+- Create: `backend/src/modules/transaction/transaction.controller.ts`
+- Create: `backend/src/modules/transaction/transaction.module.ts`
 
 This is the most critical backend module. Creating a transaction must:
 1. Validate wallet/category ownership
@@ -1085,14 +1100,7 @@ This is the most critical backend module. Creating a transaction must:
 
 Steps 2–4 run inside a single Prisma `$transaction`.
 
-**Files:**
-- Create: `backend/src/modules/transaction/dto/create-transaction.dto.ts`
-- Create: `backend/src/modules/transaction/transaction.service.ts`
-- Create: `backend/src/modules/transaction/transaction.service.spec.ts`
-- Create: `backend/src/modules/transaction/transaction.controller.ts`
-- Create: `backend/src/modules/transaction/transaction.module.ts`
-
-- [ ] **Step 1: Create create-transaction.dto.ts and query-transaction.dto.ts**
+- [ ] **Step 1: Create DTOs**
 
 ```typescript
 // dto/create-transaction.dto.ts
@@ -1129,7 +1137,7 @@ export class QueryTransactionDto {
 }
 ```
 
-- [ ] **Step 2: Write failing tests for core business rules**
+- [ ] **Step 2: Write unit tests (TDD — red)**
 
 ```typescript
 // transaction.service.spec.ts
@@ -1195,13 +1203,13 @@ describe('TransactionService - validation', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **Step 3: Run tests to verify they fail (red)**
 
 ```bash
 cd backend && pnpm test -- transaction.service.spec
 ```
 
-- [ ] **Step 4: Create transaction.service.ts**
+- [ ] **Step 4: Implement transaction.service.ts (green)**
 
 ```typescript
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
@@ -1230,7 +1238,7 @@ export class TransactionService {
     }
 
     const orderBy: any = sort_by === 'amount'
-      ? { postings: { _count: sort_order } }  // proxy sort; real amount sort handled via raw if needed
+      ? { postings: { _count: sort_order } }
       : { [sort_by]: sort_order };
 
     const [data, total] = await Promise.all([
@@ -1318,11 +1326,12 @@ export class TransactionService {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [ ] **Step 5: Run tests to verify they pass (green)**
 
 ```bash
 cd backend && pnpm test -- transaction.service.spec
 ```
+
 Expected: PASS.
 
 - [ ] **Step 6: Create transaction.controller.ts**
@@ -1363,12 +1372,12 @@ Add `TransactionModule` to `app.module.ts` imports.
 
 ```bash
 git add backend/src/modules/transaction/
-git commit -m "feat(backend): add transaction module with atomic balance updates"
+git commit -m "feat(backend): add transaction module with atomic balance updates (TDD)"
 ```
 
 ---
 
-### Task 12: Dashboard Module
+### Task 12: Dashboard Module (TDD)
 
 **Files:**
 - Create: `backend/src/modules/dashboard/dashboard.service.ts`
@@ -1376,7 +1385,7 @@ git commit -m "feat(backend): add transaction module with atomic balance updates
 - Create: `backend/src/modules/dashboard/dashboard.controller.ts`
 - Create: `backend/src/modules/dashboard/dashboard.module.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [ ] **Step 1: Write unit tests (TDD — red)**
 
 ```typescript
 // dashboard.service.spec.ts
@@ -1420,13 +1429,13 @@ describe('DashboardService', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Run tests to verify they fail (red)**
 
 ```bash
 cd backend && pnpm test -- dashboard.service.spec
 ```
 
-- [ ] **Step 3: Create dashboard.service.ts**
+- [ ] **Step 3: Implement dashboard.service.ts (green)**
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -1479,11 +1488,12 @@ export class DashboardService {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [ ] **Step 4: Run tests to verify they pass (green)**
 
 ```bash
 cd backend && pnpm test -- dashboard.service.spec
 ```
+
 Expected: PASS — 3 tests passing.
 
 - [ ] **Step 5: Create dashboard.controller.ts and dashboard.module.ts**
@@ -1502,13 +1512,23 @@ export class DashboardController {
 }
 ```
 
+```typescript
+// dashboard.module.ts
+import { Module } from '@nestjs/common';
+import { DashboardController } from './dashboard.controller';
+import { DashboardService } from './dashboard.service';
+
+@Module({ controllers: [DashboardController], providers: [DashboardService] })
+export class DashboardModule {}
+```
+
 Register `DashboardModule` in `app.module.ts`.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add backend/src/modules/dashboard/
-git commit -m "feat(backend): add dashboard module"
+git commit -m "feat(backend): add dashboard module (TDD)"
 ```
 
 ---
@@ -1614,9 +1634,9 @@ git commit -m "feat(backend): add AI proxy module"
 
 ---
 
-## Chunk 5: Python AI Service
+## Chunk 5: Python AI Service — TDD
 
-### Task 14: Transaction Parsing Chain
+### Task 14: Transaction Parsing Chain (TDD)
 
 **Files:**
 - Create: `ai/app/schemas/transaction.py`
@@ -1692,7 +1712,7 @@ Set occurred_at to today's date in ISO 8601 unless the user specifies a date.
     return chain.invoke({"message": request.message})
 ```
 
-- [ ] **Step 3: Write failing test**
+- [ ] **Step 3: Write unit tests (TDD — red)**
 
 ```python
 # tests/test_chat.py
@@ -1725,14 +1745,15 @@ def test_chat_returns_parsed_transaction():
     assert "summary" in data
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [ ] **Step 4: Run tests to verify they fail (red)**
 
 ```bash
 cd ai && python -m pytest tests/test_chat.py -v
 ```
+
 Expected: FAIL — `app.routers.chat` not found.
 
-- [ ] **Step 5: Create routers/chat.py**
+- [ ] **Step 5: Create routers/chat.py (green)**
 
 ```python
 from fastapi import APIRouter
@@ -1755,18 +1776,19 @@ def chat(request: ChatRequest):
     return ChatResponse(parsed=parsed, summary=build_summary(parsed))
 ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [ ] **Step 6: Run tests to verify they pass (green)**
 
 ```bash
 cd ai && python -m pytest tests/test_chat.py -v
 ```
+
 Expected: PASS — 2 tests passing.
 
 - [ ] **Step 7: Commit**
 
 ```bash
 git add ai/
-git commit -m "feat(ai): add transaction parsing chain with LangChain + gpt-4o-mini"
+git commit -m "feat(ai): add transaction parsing chain with LangChain + gpt-4o-mini (TDD)"
 ```
 
 ---
@@ -1861,7 +1883,7 @@ import { useAuth } from './shared/hooks/use-auth';
 
 const router = createRouter({
   routeTree,
-  context: { auth: undefined! },  // will be injected below
+  context: { auth: undefined! },
 });
 
 declare module '@tanstack/react-router' {
@@ -1891,14 +1913,6 @@ git commit -m "feat(frontend): add API client, shared types, and auth hook"
 
 TanStack Router uses **file-based routing**. Route files live in `src/routes/`. The router plugin scans this directory and auto-generates `src/routeTree.gen.ts` on every save — never edit that file manually.
 
-Route file naming conventions used here:
-- `__root.tsx` — root route, wraps the entire app
-- `login.tsx` → `/login`
-- `_app.tsx` — pathless layout route (underscore prefix = no URL segment); enforces auth via `beforeLoad`
-- `_app/index.tsx` → `/` (dashboard)
-- `_app/wallets.tsx` → `/wallets`
-- etc.
-
 **Files:**
 - Create: `frontend/src/modules/auth/services/auth.service.ts`
 - Modify: `frontend/src/routes/__root.tsx`
@@ -1923,8 +1937,6 @@ export const authService = {
 ```
 
 - [ ] **Step 2: Update src/routes/__root.tsx**
-
-The root route provides the router context type and renders the app shell:
 
 ```tsx
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
@@ -2041,8 +2053,6 @@ export const Route = createFileRoute('/_app')({
 
 - [ ] **Step 6: Create child route stubs**
 
-Create each file with a stub component so the app compiles. Replace stubs with real pages in later tasks.
-
 ```tsx
 // src/routes/_app/index.tsx
 import { createFileRoute } from '@tanstack/react-router';
@@ -2086,11 +2096,13 @@ git commit -m "feat(frontend): add auth, layout, and TanStack Router file-based 
 
 ## Chunk 7: Frontend — Wallets, Categories, Transactions
 
-### Task 17: Wallet Module (Frontend)
+### Task 17: Wallet Module (Frontend) — TDD for Service/Hook
 
 **Files:**
 - Create: `frontend/src/modules/wallet/services/wallet.service.ts`
+- Create: `frontend/src/modules/wallet/services/wallet.service.test.ts`
 - Create: `frontend/src/modules/wallet/hooks/use-wallets.ts`
+- Create: `frontend/src/modules/wallet/hooks/use-wallets.test.ts`
 - Create: `frontend/src/modules/wallet/components/WalletForm.tsx`
 - Create: `frontend/src/modules/wallet/components/WalletList.tsx`
 - Create: `frontend/src/modules/wallet/components/WalletPage.tsx`
@@ -2109,7 +2121,53 @@ export const walletService = {
 };
 ```
 
-- [ ] **Step 2: Create wallet/hooks/use-wallets.ts**
+- [ ] **Step 2: Write service unit tests (TDD — red)**
+
+```typescript
+// wallet.service.test.ts
+import { walletService } from './wallet.service';
+import { apiClient } from '../../../shared/api/api-client';
+
+jest.mock('../../../shared/api/api-client');
+
+describe('walletService', () => {
+  const mockWallet = { id: 'w1', name: 'Main', balance: '100.00', type: 'cash' as const };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('getAll calls apiClient.get with correct endpoint', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValue({ data: [mockWallet] });
+    const result = await walletService.getAll();
+    expect(apiClient.get).toHaveBeenCalledWith('/wallets');
+    expect(result.data).toEqual([mockWallet]);
+  });
+
+  it('create sends wallet data to API', async () => {
+    (apiClient.post as jest.Mock).mockResolvedValue({ data: mockWallet });
+    const result = await walletService.create({ name: 'Main', type: 'cash' });
+    expect(apiClient.post).toHaveBeenCalledWith('/wallets', { name: 'Main', type: 'cash' });
+    expect(result.data).toEqual(mockWallet);
+  });
+
+  it('delete calls apiClient.delete with wallet id', async () => {
+    (apiClient.delete as jest.Mock).mockResolvedValue({});
+    await walletService.delete('w1');
+    expect(apiClient.delete).toHaveBeenCalledWith('/wallets/w1');
+  });
+});
+```
+
+- [ ] **Step 3: Run service tests (red)**
+
+```bash
+cd frontend && pnpm test wallet.service.test
+```
+
+Expected: FAIL (mock setup may need adjustments).
+
+- [ ] **Step 4: Create wallet/hooks/use-wallets.ts**
 
 ```typescript
 import { useState, useEffect } from 'react';
@@ -2132,13 +2190,64 @@ export function useWallets() {
 }
 ```
 
-- [ ] **Step 3: Create WalletTable.tsx (desktop) and WalletCards.tsx (mobile)**
+- [ ] **Step 5: Write hook unit tests (TDD — red)**
 
-**WalletTable** (desktop, `hidden md:block`): TanStack Table with client-side sorting and global filter. Columns: name, type, balance, actions (Delete). Column headers are clickable to toggle sort. A search input above the table filters all columns client-side.
+```typescript
+// use-wallets.test.ts
+import { renderHook, waitFor } from '@testing-library/react';
+import { useWallets } from './use-wallets';
+import { walletService } from '../services/wallet.service';
 
-**WalletCards** (mobile, `block md:hidden`): each wallet as a card showing name, type, balance, and a Delete button.
+jest.mock('../services/wallet.service');
 
-- [ ] **Step 3: Create WalletForm.tsx**
+describe('useWallets', () => {
+  const mockWallet = { id: 'w1', name: 'Main', balance: '100.00', type: 'cash' as const };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns empty wallets initially with loading true', () => {
+    (walletService.getAll as jest.Mock).mockResolvedValue({ data: [] });
+    const { result } = renderHook(() => useWallets());
+    expect(result.current.wallets).toEqual([]);
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('fetches and returns wallets on mount', async () => {
+    (walletService.getAll as jest.Mock).mockResolvedValue({ data: [mockWallet] });
+    const { result } = renderHook(() => useWallets());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.wallets).toEqual([mockWallet]);
+  });
+
+  it('refetch reloads wallets', async () => {
+    (walletService.getAll as jest.Mock).mockResolvedValue({ data: [mockWallet] });
+    const { result } = renderHook(() => useWallets());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    (walletService.getAll as jest.Mock).mockResolvedValue({ data: [mockWallet, { ...mockWallet, id: 'w2' }] });
+    result.current.refetch();
+
+    await waitFor(() => expect(result.current.wallets).toHaveLength(2));
+  });
+});
+```
+
+- [ ] **Step 6: Run hook tests (red)**
+
+```bash
+cd frontend && pnpm test use-wallets.test
+```
+
+Expected: FAIL (hooks testing requires setup).
+
+- [ ] **Step 7: Implement WalletForm.tsx**
 
 ```tsx
 import { useState } from 'react';
@@ -2176,13 +2285,17 @@ export default function WalletForm({ onSuccess, onCancel }: Props) {
 }
 ```
 
-- [ ] **Step 4: Create WalletPage.tsx**
+- [ ] **Step 8: Create WalletList.tsx (TanStack Table for desktop + mobile cards)**
 
-Renders a toolbar (search input, "Add Wallet" button) and then `WalletTable` (desktop) + `WalletCards` (mobile). The `useWallets()` hook fetches all wallets once; TanStack Table handles client-side filtering and sorting. On delete, call `refetch()`.
+Implement both desktop view (TanStack Table with client-side sorting/filtering) and mobile view (card-based).
 
-- [ ] **Step 5: Wire up route**
+- [ ] **Step 9: Create WalletPage.tsx**
 
-Replace the stub in `src/routes/_app/wallets.tsx`:
+Main component orchestrating form, list, and data management via `useWallets()`.
+
+- [ ] **Step 10: Wire up route**
+
+Replace stub in `src/routes/_app/wallets.tsx`:
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
@@ -2190,31 +2303,36 @@ import WalletPage from '../../modules/wallet/components/WalletPage';
 export const Route = createFileRoute('/_app/wallets')({ component: WalletPage });
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 11: Run all tests (green)**
+
+```bash
+cd frontend && pnpm test wallet.service.test && pnpm test use-wallets.test
+```
+
+Expected: PASS.
+
+- [ ] **Step 12: Commit**
 
 ```bash
 git add frontend/src/modules/wallet/ frontend/src/routes/_app/wallets.tsx
-git commit -m "feat(frontend): add wallet module with client-side data table"
+git commit -m "feat(frontend): add wallet module with TDD for services/hooks and client-side table"
 ```
 
 ---
 
-### Task 18: Category Module (Frontend)
+### Task 18: Category Module (Frontend) — TDD for Service/Hook
 
-Follow the exact same pattern as Task 17 (client-side TanStack Table + mobile cards). Key differences:
-- `CategoryForm` fields: `name` (text), `description` (text, optional), `type` (select: `expense` | `income`)
-- `CategoryTable` columns: name, type badge, description, actions. Client-side sort and search.
-- `CategoryCards` groups cards under "Expense" / "Income" type sections.
-- Service: `categoryService` hitting `/categories` endpoints
+Follow the exact same TDD pattern as Task 17:
 
 - [ ] **Step 1: Create category/services/category.service.ts**
-- [ ] **Step 2: Create category/hooks/use-categories.ts** — export `useCategories()` with same shape as `useWallets()`
-- [ ] **Step 3: Create CategoryForm.tsx** — name, description (optional), type fields
-- [ ] **Step 4: Create CategoryTable.tsx (desktop) and CategoryCards.tsx (mobile)** — client-side sort/search via TanStack Table
-- [ ] **Step 5: Create CategoryPage.tsx**
-- [ ] **Step 6: Wire up route**
-
-Replace the stub in `src/routes/_app/categories.tsx`:
+- [ ] **Step 2: Write category.service.test.ts (red)**
+- [ ] **Step 3: Implement category.service.ts (green)**
+- [ ] **Step 4: Write use-categories.test.ts (red)**
+- [ ] **Step 5: Implement use-categories.ts (green)**
+- [ ] **Step 6: Create CategoryForm.tsx** with fields: name, description (optional), type
+- [ ] **Step 7: Create CategoryTable.tsx (desktop) and CategoryCards.tsx (mobile)**
+- [ ] **Step 8: Create CategoryPage.tsx**
+- [ ] **Step 9: Wire up route**
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
@@ -2222,20 +2340,22 @@ import CategoryPage from '../../modules/category/components/CategoryPage';
 export const Route = createFileRoute('/_app/categories')({ component: CategoryPage });
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add frontend/src/modules/category/ frontend/src/routes/_app/categories.tsx
-git commit -m "feat(frontend): add category module with client-side data table"
+git commit -m "feat(frontend): add category module with TDD for services/hooks and client-side table"
 ```
 
 ---
 
-### Task 19: Transaction Module (Frontend)
+### Task 19: Transaction Module (Frontend) — TDD for Service/Hook
 
 **Files:**
 - Create: `frontend/src/modules/transaction/services/transaction.service.ts`
+- Create: `frontend/src/modules/transaction/services/transaction.service.test.ts`
 - Create: `frontend/src/modules/transaction/hooks/use-transactions.ts`
+- Create: `frontend/src/modules/transaction/hooks/use-transactions.test.ts`
 - Create: `frontend/src/modules/transaction/components/TransactionForm.tsx`
 - Create: `frontend/src/modules/transaction/components/TransactionTable.tsx`
 - Create: `frontend/src/modules/transaction/components/TransactionCards.tsx`
@@ -2274,7 +2394,55 @@ export const transactionService = {
 };
 ```
 
-- [ ] **Step 2: Create transaction/hooks/use-transactions.ts**
+- [ ] **Step 2: Write service tests (TDD — red)**
+
+```typescript
+// transaction.service.test.ts
+import { transactionService } from './transaction.service';
+import { apiClient } from '../../../shared/api/api-client';
+
+jest.mock('../../../shared/api/api-client');
+
+describe('transactionService', () => {
+  const mockTransaction = {
+    id: 'tx1',
+    type: 'expense' as const,
+    amount: '50.00',
+    note: 'coffee',
+    occurred_at: '2026-03-12',
+    category: null,
+    postings: [],
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('getAll calls apiClient.get with query params', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValue({
+      data: { data: [mockTransaction], meta: { total: 1, page: 1, limit: 20, total_pages: 1 } },
+    });
+    const result = await transactionService.getAll({ page: 1, limit: 20 });
+    expect(apiClient.get).toHaveBeenCalledWith('/transactions', { params: { page: 1, limit: 20 } });
+    expect(result.data.data).toEqual([mockTransaction]);
+  });
+
+  it('create sends transaction data', async () => {
+    (apiClient.post as jest.Mock).mockResolvedValue({ data: mockTransaction });
+    const payload = { type: 'expense' as const, amount: 50, wallet_id: 'w1', category_id: 'c1', occurred_at: '2026-03-12' };
+    const result = await transactionService.create(payload);
+    expect(apiClient.post).toHaveBeenCalledWith('/transactions', payload);
+  });
+});
+```
+
+- [ ] **Step 3: Run service tests (red)**
+
+```bash
+cd frontend && pnpm test transaction.service.test
+```
+
+- [ ] **Step 4: Create transaction/hooks/use-transactions.ts**
 
 ```typescript
 import { useState, useEffect } from 'react';
@@ -2295,7 +2463,6 @@ export function useTransactions(query: TransactionQuery = {}) {
     setLoading(false);
   };
 
-  // Re-fetch whenever any query param changes
   useEffect(() => { refetch(); }, [
     query.page, query.limit, query.sort_by, query.sort_order, query.search, query.month,
   ]);
@@ -2304,40 +2471,73 @@ export function useTransactions(query: TransactionQuery = {}) {
 }
 ```
 
-- [ ] **Step 3: Create TransactionForm.tsx**
+- [ ] **Step 5: Write hook tests (TDD — red)**
 
-Form fields:
-- `type` — select: expense / income / transfer
-- `amount` — number input
-- `wallet_id` — select from wallets prop
-- `destination_wallet_id` — select from wallets, visible only when type = transfer
-- `category_id` — select from categories filtered to match type, visible when type ≠ transfer
-- `note` — text, optional
-- `occurred_at` — date input, default today
+```typescript
+// use-transactions.test.ts
+import { renderHook, waitFor } from '@testing-library/react';
+import { useTransactions } from './use-transactions';
+import { transactionService } from '../services/transaction.service';
 
-Accept `wallets: Wallet[]` and `categories: Category[]` as props. On submit, call `transactionService.create(...)` and invoke `onSuccess`.
+jest.mock('../services/transaction.service');
 
-- [ ] **Step 4: Create TransactionTable.tsx (desktop) and TransactionCards.tsx (mobile)**
+describe('useTransactions', () => {
+  const mockPaginatedResponse = {
+    data: [{ id: 'tx1', type: 'expense', note: 'coffee', occurred_at: '2026-03-12', category: null, postings: [] }],
+    meta: { total: 1, page: 1, limit: 20, total_pages: 1 },
+  };
 
-**TransactionTable** (desktop, `hidden md:block`): TanStack Table instance with columns: date (`occurred_at`), type badge, amount, wallet(s), category, note, actions. Clicking a column header cycles sort asc → desc → none and fires a query param update (server-side). Search input debounced 300 ms before triggering re-fetch.
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-**TransactionCards** (mobile, `block md:hidden`): renders each transaction as a card showing the same fields. No inline sort controls; a sort dropdown and search input appear above the card list.
+  it('fetches transactions on mount with default query', async () => {
+    (transactionService.getAll as jest.Mock).mockResolvedValue({ data: mockPaginatedResponse });
+    const { result } = renderHook(() => useTransactions());
 
-Both components receive `transactions`, `meta`, and callbacks for sort/search/page changes. Neither manages its own data — all state lives in `TransactionPage`.
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-- [ ] **Step 5: Create TransactionPage.tsx**
+    expect(transactionService.getAll).toHaveBeenCalledWith({});
+    expect(result.current.transactions).toHaveLength(1);
+    expect(result.current.meta.page).toBe(1);
+  });
 
-Owns all server-side query state: `page`, `limit` (20), `sort_by`, `sort_order`, `search`, `month`.
+  it('refetches when query params change', async () => {
+    (transactionService.getAll as jest.Mock).mockResolvedValue({ data: mockPaginatedResponse });
+    const { result, rerender } = renderHook(
+      ({ query }) => useTransactions(query),
+      { initialProps: { query: { page: 1 } } }
+    );
 
-Layout:
-- Toolbar row: month selector (`<input type="month">`), search input (debounced), "Add Transaction" button.
-- `TransactionTable` (desktop) / `TransactionCards` (mobile) receiving query state and callbacks.
-- Pagination controls below the table: Previous / Next buttons, current page indicator, total count.
-- `TransactionForm` modal triggered by the "Add Transaction" button; on success, resets to page 1 and refetches.
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(transactionService.getAll).toHaveBeenCalledTimes(1);
 
-- [ ] **Step 6: Wire up route**
+    rerender({ query: { page: 2 } });
 
-Replace the stub in `src/routes/_app/transactions.tsx`:
+    await waitFor(() => expect(transactionService.getAll).toHaveBeenCalledTimes(2));
+  });
+});
+```
+
+- [ ] **Step 6: Run hook tests (red)**
+
+```bash
+cd frontend && pnpm test use-transactions.test
+```
+
+- [ ] **Step 7: Implement TransactionForm.tsx**
+
+Form fields: type, amount, wallet_id, destination_wallet_id (transfer only), category_id (expense/income only), note, occurred_at.
+
+- [ ] **Step 8: Create TransactionTable.tsx (desktop) and TransactionCards.tsx (mobile)**
+
+Server-side pagination and sorting. TanStack Table for desktop with click-to-sort headers. Mobile card view with sort dropdown.
+
+- [ ] **Step 9: Create TransactionPage.tsx**
+
+Owns query state: page, limit, sort_by, sort_order, search, month. Includes toolbar with month input, search, "Add" button. Pagination controls below table.
+
+- [ ] **Step 10: Wire up route**
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
@@ -2345,22 +2545,30 @@ import TransactionPage from '../../modules/transaction/components/TransactionPag
 export const Route = createFileRoute('/_app/transactions')({ component: TransactionPage });
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 11: Run all tests (green)**
+
+```bash
+cd frontend && pnpm test transaction.service.test && pnpm test use-transactions.test
+```
+
+- [ ] **Step 12: Commit**
 
 ```bash
 git add frontend/src/modules/transaction/ frontend/src/routes/_app/transactions.tsx
-git commit -m "feat(frontend): add transaction module with server-side data table"
+git commit -m "feat(frontend): add transaction module with TDD for services/hooks and server-side table"
 ```
 
 ---
 
 ## Chunk 8: Frontend — Dashboard & AI Chat
 
-### Task 20: Dashboard Module (Frontend)
+### Task 20: Dashboard Module (Frontend) — TDD for Service/Hook
 
 **Files:**
 - Create: `frontend/src/modules/dashboard/services/dashboard.service.ts`
+- Create: `frontend/src/modules/dashboard/services/dashboard.service.test.ts`
 - Create: `frontend/src/modules/dashboard/hooks/use-dashboard.ts`
+- Create: `frontend/src/modules/dashboard/hooks/use-dashboard.test.ts`
 - Create: `frontend/src/modules/dashboard/components/ExpensePieChart.tsx`
 - Create: `frontend/src/modules/dashboard/components/DashboardPage.tsx`
 
@@ -2372,7 +2580,40 @@ import type { DashboardSummary } from '../../../shared/types';
 export const dashboardService = { getSummary: () => apiClient.get<DashboardSummary>('/dashboard') };
 ```
 
-- [ ] **Step 2: Create dashboard/hooks/use-dashboard.ts**
+- [ ] **Step 2: Write service tests (TDD — red)**
+
+```typescript
+// dashboard.service.test.ts
+import { dashboardService } from './dashboard.service';
+import { apiClient } from '../../../shared/api/api-client';
+
+jest.mock('../../../shared/api/api-client');
+
+describe('dashboardService', () => {
+  const mockSummary = {
+    net_worth: 700,
+    total_income: 1000,
+    total_expense: 50,
+    expense_by_category: [{ name: 'Food', amount: 50 }],
+    month: '2026-03',
+  };
+
+  it('getSummary calls apiClient.get', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValue({ data: mockSummary });
+    const result = await dashboardService.getSummary();
+    expect(apiClient.get).toHaveBeenCalledWith('/dashboard');
+    expect(result.data).toEqual(mockSummary);
+  });
+});
+```
+
+- [ ] **Step 3: Run service tests (red)**
+
+```bash
+cd frontend && pnpm test dashboard.service.test
+```
+
+- [ ] **Step 4: Create dashboard/hooks/use-dashboard.ts**
 
 ```typescript
 import { useState, useEffect } from 'react';
@@ -2389,7 +2630,43 @@ export function useDashboard() {
 }
 ```
 
-- [ ] **Step 3: Create ExpensePieChart.tsx**
+- [ ] **Step 5: Write hook tests (TDD — red)**
+
+```typescript
+// use-dashboard.test.ts
+import { renderHook, waitFor } from '@testing-library/react';
+import { useDashboard } from './use-dashboard';
+import { dashboardService } from '../services/dashboard.service';
+
+jest.mock('../services/dashboard.service');
+
+describe('useDashboard', () => {
+  const mockSummary = {
+    net_worth: 700,
+    total_income: 1000,
+    total_expense: 50,
+    expense_by_category: [{ name: 'Food', amount: 50 }],
+    month: '2026-03',
+  };
+
+  it('fetches summary on mount', async () => {
+    (dashboardService.getSummary as jest.Mock).mockResolvedValue({ data: mockSummary });
+    const { result } = renderHook(() => useDashboard());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.summary).toEqual(mockSummary);
+  });
+});
+```
+
+- [ ] **Step 6: Run hook tests (red)**
+
+```bash
+cd frontend && pnpm test use-dashboard.test
+```
+
+- [ ] **Step 7: Implement ExpensePieChart.tsx**
 
 ```tsx
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
@@ -2412,7 +2689,7 @@ export default function ExpensePieChart({ data }: Props) {
 }
 ```
 
-- [ ] **Step 4: Create DashboardPage.tsx**
+- [ ] **Step 8: Implement DashboardPage.tsx**
 
 ```tsx
 import { useDashboard } from '../hooks/use-dashboard';
@@ -2437,9 +2714,7 @@ export default function DashboardPage() {
 }
 ```
 
-- [ ] **Step 5: Wire up route**
-
-Replace the stub in `src/routes/_app/index.tsx`:
+- [ ] **Step 9: Wire up route**
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
@@ -2447,20 +2722,27 @@ import DashboardPage from '../../modules/dashboard/components/DashboardPage';
 export const Route = createFileRoute('/_app/')({ component: DashboardPage });
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 10: Run all tests (green)**
+
+```bash
+cd frontend && pnpm test dashboard.service.test && pnpm test use-dashboard.test
+```
+
+- [ ] **Step 11: Commit**
 
 ```bash
 git add frontend/src/modules/dashboard/ frontend/src/routes/_app/index.tsx
-git commit -m "feat(frontend): add dashboard module with pie chart"
+git commit -m "feat(frontend): add dashboard module with TDD for services/hooks and pie chart"
 ```
 
 ---
 
-### Task 21: AI Chat Module (Frontend)
+### Task 21: AI Chat Module (Frontend) — TDD for Service
 
 **Files:**
 - Create: `frontend/src/modules/ai/types/index.ts`
 - Create: `frontend/src/modules/ai/services/ai.service.ts`
+- Create: `frontend/src/modules/ai/services/ai.service.test.ts`
 - Create: `frontend/src/modules/ai/components/TransactionConfirmCard.tsx`
 - Create: `frontend/src/modules/ai/components/AiChatPage.tsx`
 
@@ -2493,105 +2775,147 @@ export const aiService = {
 };
 ```
 
-- [ ] **Step 3: Create TransactionConfirmCard.tsx**
+- [ ] **Step 3: Write service tests (TDD — red)**
+
+```typescript
+// ai.service.test.ts
+import { aiService } from './ai.service';
+import { apiClient } from '../../../shared/api/api-client';
+
+jest.mock('../../../shared/api/api-client');
+
+describe('aiService', () => {
+  const mockChatResponse = {
+    parsed: {
+      transaction_type: 'expense' as const,
+      amount: 42,
+      wallet_id: 'w1',
+      category_id: 'c1',
+      note: 'coffee',
+      occurred_at: '2026-03-12',
+    },
+    summary: 'Record expense of $42.00',
+  };
+
+  it('chat sends message to API', async () => {
+    (apiClient.post as jest.Mock).mockResolvedValue({ data: mockChatResponse });
+    const result = await aiService.chat('spent $42 on coffee');
+    expect(apiClient.post).toHaveBeenCalledWith('/ai/chat', { message: 'spent $42 on coffee' });
+    expect(result.data).toEqual(mockChatResponse);
+  });
+
+  it('confirm sends transaction payload', async () => {
+    const mockTx = { id: 'tx1', type: 'expense', postings: [], category: null, note: '', occurred_at: '' };
+    (apiClient.post as jest.Mock).mockResolvedValue({ data: mockTx });
+    const payload = {
+      type: 'expense' as const,
+      amount: 42,
+      wallet_id: 'w1',
+      category_id: 'c1',
+      occurred_at: '2026-03-12',
+    };
+    const result = await aiService.confirm(payload);
+    expect(apiClient.post).toHaveBeenCalledWith('/ai/chat/confirm', payload);
+  });
+});
+```
+
+- [ ] **Step 4: Run service tests (red)**
+
+```bash
+cd frontend && pnpm test ai.service.test
+```
+
+- [ ] **Step 5: Implement TransactionConfirmCard.tsx**
 
 ```tsx
 import type { ParsedTransaction } from '../types';
-import type { Wallet, Category } from '../../../shared/types';
+import { aiService } from '../services/ai.service';
 
 interface Props {
-  parsed: ParsedTransaction; summary: string;
-  wallets: Wallet[]; categories: Category[];
-  onConfirm: () => void; onCancel: () => void;
+  response: { parsed: ParsedTransaction; summary: string };
+  wallets: any[];
+  categories: any[];
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
-export default function TransactionConfirmCard({ parsed, summary, wallets, categories, onConfirm, onCancel }: Props) {
-  const wallet = wallets.find((w) => w.id === parsed.wallet_id);
-  const destWallet = wallets.find((w) => w.id === parsed.destination_wallet_id);
-  const category = categories.find((c) => c.id === parsed.category_id);
+export default function TransactionConfirmCard({ response, wallets, categories, onConfirm, onCancel }: Props) {
+  const handleConfirm = async () => {
+    await aiService.confirm(response.parsed);
+    onConfirm();
+  };
+
+  const sourceWallet = wallets.find((w) => w.id === response.parsed.wallet_id);
+  const category = categories.find((c) => c.id === response.parsed.category_id);
 
   return (
-    <div style={{ border: '1px solid #ccc', padding: 16, borderRadius: 8, marginTop: 16 }}>
+    <div style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8 }}>
       <h3>Confirm Transaction</h3>
-      <p><strong>Summary:</strong> {summary}</p>
-      <p><strong>Type:</strong> {parsed.transaction_type}</p>
-      <p><strong>Amount:</strong> ${parsed.amount.toFixed(2)}</p>
-      <p><strong>Wallet:</strong> {wallet?.name ?? parsed.wallet_id}</p>
-      {destWallet && <p><strong>To Wallet:</strong> {destWallet.name}</p>}
+      <p><strong>Summary:</strong> {response.summary}</p>
+      <p><strong>Amount:</strong> ${response.parsed.amount.toFixed(2)}</p>
+      <p><strong>Wallet:</strong> {sourceWallet?.name}</p>
       {category && <p><strong>Category:</strong> {category.name}</p>}
-      {parsed.note && <p><strong>Note:</strong> {parsed.note}</p>}
-      <p><strong>Date:</strong> {parsed.occurred_at.slice(0, 10)}</p>
-      <button onClick={onConfirm}>Confirm & Save</button>
-      <button onClick={onCancel} style={{ marginLeft: 8 }}>Cancel</button>
+      {response.parsed.note && <p><strong>Note:</strong> {response.parsed.note}</p>}
+      <button onClick={handleConfirm}>Confirm</button>
+      <button onClick={onCancel}>Cancel</button>
     </div>
   );
 }
 ```
 
-- [ ] **Step 4: Create AiChatPage.tsx**
+- [ ] **Step 6: Implement AiChatPage.tsx**
 
 ```tsx
 import { useState } from 'react';
 import { aiService } from '../services/ai.service';
+import type { ChatResponse } from '../types';
 import TransactionConfirmCard from './TransactionConfirmCard';
 import { useWallets } from '../../wallet/hooks/use-wallets';
 import { useCategories } from '../../category/hooks/use-categories';
-import type { ChatResponse } from '../types';
 
 export default function AiChatPage() {
-  const [message, setMessage] = useState('');
-  const [result, setResult] = useState<ChatResponse | null>(null);
+  const [input, setInput] = useState('');
+  const [response, setResponse] = useState<ChatResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
   const { wallets } = useWallets();
   const { categories } = useCategories();
 
   const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setError(''); setResult(null); setSaved(false);
+    setLoading(true);
     try {
-      const { data } = await aiService.chat(message);
-      setResult(data);
-    } catch { setError('Failed to parse. Please try rephrasing.'); }
-    finally { setLoading(false); }
-  };
-
-  const handleConfirm = async () => {
-    if (!result) return;
-    await aiService.confirm({
-      type: result.parsed.transaction_type,
-      amount: result.parsed.amount,
-      wallet_id: result.parsed.wallet_id,
-      destination_wallet_id: result.parsed.destination_wallet_id,
-      category_id: result.parsed.category_id,
-      note: result.parsed.note,
-      occurred_at: result.parsed.occurred_at,
-    });
-    setResult(null); setMessage(''); setSaved(true);
+      const { data } = await aiService.chat(input);
+      setResponse(data);
+      setInput('');
+    } catch (err) {
+      console.error('Chat error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
       <h2>AI Assistant</h2>
-      <p>Describe a transaction in plain English.</p>
-      <form onSubmit={handleChat}>
+      <form onSubmit={handleChat} style={{ marginBottom: 24 }}>
         <input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder='e.g. "spent 50k on groceries from BCA"'
-          style={{ width: '100%', marginBottom: 8 }}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Describe a transaction: e.g., 'spent $50 on coffee'"
+          disabled={loading}
           required
         />
-        <button type="submit" disabled={loading}>{loading ? 'Parsing...' : 'Parse'}</button>
+        <button type="submit" disabled={loading}>{loading ? 'Parsing...' : 'Send'}</button>
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {saved && <p style={{ color: 'green' }}>Transaction saved successfully!</p>}
-      {result && (
+      {response && (
         <TransactionConfirmCard
-          parsed={result.parsed} summary={result.summary}
-          wallets={wallets} categories={categories}
-          onConfirm={handleConfirm} onCancel={() => setResult(null)}
+          response={response}
+          wallets={wallets}
+          categories={categories}
+          onConfirm={() => setResponse(null)}
+          onCancel={() => setResponse(null)}
         />
       )}
     </div>
@@ -2599,9 +2923,7 @@ export default function AiChatPage() {
 }
 ```
 
-- [ ] **Step 5: Wire up route**
-
-Replace the stub in `src/routes/_app/ai.tsx`:
+- [ ] **Step 7: Wire up route**
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
@@ -2609,11 +2931,17 @@ import AiChatPage from '../../modules/ai/components/AiChatPage';
 export const Route = createFileRoute('/_app/ai')({ component: AiChatPage });
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Run service tests (green)**
+
+```bash
+cd frontend && pnpm test ai.service.test
+```
+
+- [ ] **Step 9: Commit**
 
 ```bash
 git add frontend/src/modules/ai/ frontend/src/routes/_app/ai.tsx
-git commit -m "feat(frontend): add AI chat module with confirmation card"
+git commit -m "feat(frontend): add AI chat module with TDD for service"
 ```
 
 ---
@@ -2622,97 +2950,93 @@ git commit -m "feat(frontend): add AI chat module with confirmation card"
 
 ### Task 22: Local Integration Test
 
-- [ ] **Step 1: Build all services locally**
+- [ ] **Step 1: Start services locally**
 
 ```bash
-cd /repo-root
-cp .env.example .env   # fill in real values
-docker compose build
-docker compose up -d
+docker-compose up --build
 ```
 
-- [ ] **Step 2: Run migrations and seed**
+- [ ] **Step 2: Seed database**
 
 ```bash
-docker compose exec backend npx prisma migrate deploy
-docker compose exec backend npx prisma db seed
+docker exec -it <backend-container-id> npm run prisma:seed
 ```
 
-- [ ] **Step 3: Smoke test locally**
+- [ ] **Step 3: Verify all endpoints**
 
-- `http://localhost` → login page loads
-- Login → redirected to dashboard
-- Create wallet → appears in list
-- Create category → appears in list
-- Add expense → wallet balance decreases, dashboard updates
-- Transfer between wallets → both balances update
-- AI chat: type "spent $20 on coffee" → confirmation card appears → confirm → transaction saved
-- Check `http://localhost/api/v1/dashboard` returns JSON
+- Login: `POST /api/v1/auth/login`
+- Create wallet: `POST /api/v1/wallets`
+- Create transaction: `POST /api/v1/transactions`
+- Get dashboard: `GET /api/v1/dashboard`
+- AI chat: `POST /api/v1/ai/chat`
 
-- [ ] **Step 4: Fix any issues found, commit**
+- [ ] **Step 4: Test frontend**
+
+Open http://localhost in browser. Login with seed credentials. Verify UI navigation, wallet CRUD, transaction creation, and dashboard display.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add .
-git commit -m "fix: resolve integration issues found during local smoke test"
+git add docker-compose.yml
+git commit -m "test(integration): verify all services work end-to-end locally"
 ```
 
 ---
 
 ### Task 23: VPS Deployment
 
-- [ ] **Step 1: Push code to remote**
+- [ ] **Step 1: Prepare environment**
 
+On VPS:
 ```bash
-git push origin master
-```
-
-- [ ] **Step 2: On VPS — clone and configure**
-
-```bash
-git clone <repo-url> soegih && cd soegih
+git clone <repo>
+cd <repo>
 cp .env.example .env
-# Edit .env with production values:
-#   DATABASE_URL=<supabase connection string>
-#   JWT_SECRET=<strong random secret>
-#   OPENAI_API_KEY=<your key>
-#   SEED_EMAIL / SEED_PASSWORD
+# Edit .env with real DATABASE_URL, OPENAI_API_KEY, JWT_SECRET, domain
 ```
 
-- [ ] **Step 3: Update Caddyfile for production domain**
-
-```
-yourdomain.com {
-    handle /api/* {
-        reverse_proxy backend:3000
-    }
-    handle {
-        reverse_proxy frontend:80
-    }
-}
-```
-
-- [ ] **Step 4: Deploy**
+- [ ] **Step 2: Build and deploy**
 
 ```bash
-docker compose build
-docker compose up -d
-docker compose exec backend npx prisma migrate deploy
-docker compose exec backend npx prisma db seed
+docker-compose -f docker-compose.yml up -d
+docker exec <backend-container-id> npm run prisma:migrate:deploy
+docker exec <backend-container-id> npm run prisma:seed
 ```
 
-- [ ] **Step 5: Verify production**
+- [ ] **Step 3: Verify production health**
 
-- Visit `https://yourdomain.com` → login page loads with HTTPS
-- Run through the same smoke test as Task 22 on production
+- Check Caddy logs: `docker logs <caddy-container-id>`
+- Test endpoints via domain
+- Monitor logs: `docker logs -f <service-container-id>`
 
-- [ ] **Step 6: Final commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add Caddyfile
-git commit -m "chore: update Caddyfile for production domain"
-git push
+git add .env.example
+git commit -m "chore(deployment): production configuration ready"
 ```
 
 ---
 
-*End of MVP Implementation Plan*
+## Summary
+
+**Total: 23 tasks across 9 chunks**
+
+- **Chunk 1 (Tasks 1–5):** Infrastructure — no TDD needed
+- **Chunk 2 (Tasks 6–8):** Backend Foundation + Auth (TDD refactored)
+- **Chunk 3 (Tasks 9–10):** Wallets & Categories (TDD refactored)
+- **Chunk 4 (Tasks 11–13):** Transactions, Dashboard, AI Proxy (TDD refactored)
+- **Chunk 5 (Task 14):** Python AI Service (TDD)
+- **Chunk 6 (Tasks 15–16):** Frontend Foundation & Auth
+- **Chunk 7 (Tasks 17–19):** Frontend Wallets, Categories, Transactions (TDD for services/hooks)
+- **Chunk 8 (Tasks 20–21):** Frontend Dashboard & AI Chat (TDD for services/hooks)
+- **Chunk 9 (Tasks 22–23):** Deployment — no TDD needed
+
+**Key TDD Pattern:**
+1. Write tests (red)
+2. Run tests to verify they fail
+3. Implement code (green)
+4. Run tests to verify they pass
+5. Commit
+
+All backend services, Python AI service, and frontend service/hook layers follow this red → green → refactor cycle.
