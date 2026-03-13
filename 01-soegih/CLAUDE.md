@@ -74,3 +74,61 @@ Examples:
 - Medium-to-advanced complexity → plan & ask before coding
 - Architectural decisions → get alignment first
 - Multi-file changes → confirm approach with user
+
+## Documentation
+
+### Living Documentation
+
+All documentation is kept in sync with implementation:
+
+- **[docs/README.md](docs/README.md)** — Documentation index
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — High-level system overview with ASCII diagrams; links to actual code
+- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** — Updated per chunk with completed tasks
+- **[docs/DATA_MODELS.md](docs/DATA_MODELS.md)** — Database schema and entity relationships (auto-generated from Prisma)
+- **[docs/API_REFERENCE.md](docs/API_REFERENCE.md)** — Backend API endpoints and usage examples
+- **[docs/AUTH_FLOW.md](docs/AUTH_FLOW.md)** — Supabase JWT validation flow and authentication
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Local setup, integration testing, and VPS deployment
+
+### Auto-Generation Scripts
+
+```bash
+# Generate schema documentation from Prisma schema
+npm run gen:schema-docs
+```
+
+Add to `backend/package.json`:
+```json
+{
+  "scripts": {
+    "gen:schema-docs": "node ../../scripts/generate-schema-docs.js"
+  }
+}
+```
+
+### Update Process (Per Chunk)
+
+1. Implement the chunk (tasks, tests, code)
+2. Update **docs/ARCHITECTURE.md** with new components/endpoints added
+3. Run auto-generation scripts (e.g., `npm run gen:schema-docs`)
+4. Update **docs/CHANGELOG.md** with completed tasks and files created
+5. Commit documentation changes as part of final chunk commit
+
+Example commit message:
+```
+feat(soegih): implement Chunk 2 — Backend Foundation
+
+- Task 6: Prisma schema & migrations
+- Task 7: Prisma service + app bootstrap
+- Task 8: Supabase JWT validation guard
+
+docs: update ARCHITECTURE.md, generate schema docs, update CHANGELOG.md
+```
+
+### Documentation Guidelines
+
+- Keep **ARCHITECTURE.md** high-level and visual; link to actual files in `/src` rather than duplicating code
+- Use text-based ASCII diagrams for flows, architecture, and entity relationships
+- Keep reference docs (DATA_MODELS, API_REFERENCE) in sync with actual implementation
+- Focus documentation on "what exists now", not "what will be implemented"
+- When adding new API endpoints, update **docs/API_REFERENCE.md** with curl examples
+- When schema changes, run auto-generation to keep **docs/generated/schema.prisma.md** current
