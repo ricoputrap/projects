@@ -161,21 +161,30 @@ git commit -m "chore: scaffold Python AI service"
 ### Task 4: Scaffold React Frontend
 
 **Files:**
-- Create: `frontend/` (Vite + React project)
+- Create: `frontend/` (Vite + React + TanStack Router project)
 
-- [ ] **Step 1: Scaffold Vite project**
+- [ ] **Step 1: Scaffold project with create-tsrouter-app**
 
 ```bash
-pnpm create vite@latest frontend -- --template react-ts
+pnpx create-tsrouter-app@latest frontend
+# Select: React, TypeScript, Vite, file-based routing
 cd frontend && pnpm install
-pnpm add react-router-dom axios recharts
 ```
 
-- [ ] **Step 2: Remove boilerplate**
+`create-tsrouter-app` sets up `@tanstack/react-router`, `@tanstack/router-vite-plugin`, and the `routeTree.gen.ts` auto-generation pipeline.
 
-Delete `src/App.css`, `src/assets/react.svg`. Clear `src/App.tsx` to a minimal stub.
+- [ ] **Step 2: Install additional dependencies**
 
-- [ ] **Step 3: Create module-based structure**
+```bash
+cd frontend
+pnpm add axios recharts @tanstack/react-table
+```
+
+- [ ] **Step 3: Remove boilerplate**
+
+Delete any generated demo route files and placeholder components that won't be used. Keep `src/routes/__root.tsx` and `src/main.tsx` — these will be modified in Task 16.
+
+- [ ] **Step 4: Create module-based structure**
 
 ```bash
 cd frontend
@@ -184,11 +193,11 @@ mkdir -p src/shared/{components,hooks,utils,types}
 mkdir -p src/assets
 ```
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add frontend/
-git commit -m "chore: scaffold React frontend"
+git commit -m "chore: scaffold React frontend with TanStack Router"
 ```
 
 ---
@@ -1083,9 +1092,10 @@ Steps 2–4 run inside a single Prisma `$transaction`.
 - Create: `backend/src/modules/transaction/transaction.controller.ts`
 - Create: `backend/src/modules/transaction/transaction.module.ts`
 
-- [ ] **Step 1: Create create-transaction.dto.ts**
+- [ ] **Step 1: Create create-transaction.dto.ts and query-transaction.dto.ts**
 
 ```typescript
+// dto/create-transaction.dto.ts
 import { IsString, IsEnum, IsOptional, IsNumber, IsPositive, IsISO8601, IsUUID } from 'class-validator';
 
 export enum TransactionType { expense = 'expense', income = 'income', transfer = 'transfer' }
@@ -1101,6 +1111,24 @@ export class CreateTransactionDto {
 }
 ```
 
+```typescript
+// dto/query-transaction.dto.ts
+import { IsOptional, IsInt, Min, IsEnum, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export enum TransactionSortBy { occurred_at = 'occurred_at', amount = 'amount', type = 'type' }
+export enum SortOrder { asc = 'asc', desc = 'desc' }
+
+export class QueryTransactionDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page: number = 1;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) limit: number = 20;
+  @IsOptional() @IsEnum(TransactionSortBy) sort_by: TransactionSortBy = TransactionSortBy.occurred_at;
+  @IsOptional() @IsEnum(SortOrder) sort_order: SortOrder = SortOrder.desc;
+  @IsOptional() @IsString() search?: string;
+  @IsOptional() @IsString() month?: string;  // YYYY-MM
+}
+```
+
 - [ ] **Step 2: Write failing tests for core business rules**
 
 ```typescript
@@ -1110,6 +1138,7 @@ import { TransactionService } from './transaction.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TransactionType } from './dto/create-transaction.dto';
+import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 const USER_ID = 'user-uuid';
 
@@ -1126,7 +1155,12 @@ describe('TransactionService - validation', () => {
       wallet: { findFirst: jest.fn().mockResolvedValue(mockWallet) },
       category: { findFirst: jest.fn().mockResolvedValue(mockCategory) },
       $transaction: jest.fn().mockImplementation((fn) => fn(prisma)),
-      transaction_event: { create: jest.fn().mockResolvedValue(mockEvent), findFirst: jest.fn().mockResolvedValue(mockEvent) },
+      transaction_event: {
+        create: jest.fn().mockResolvedValue(mockEvent),
+        findFirst: jest.fn().mockResolvedValue(mockEvent),
+        findMany: jest.fn().mockResolvedValue([mockEvent]),
+        count: jest.fn().mockResolvedValue(1),
+      },
       posting: { create: jest.fn().mockResolvedValue({}) },
     };
     const module = await Test.createTestingModule({
@@ -1150,6 +1184,14 @@ describe('TransactionService - validation', () => {
     await expect(service.create(USER_ID, { type: TransactionType.expense, amount: 50, wallet_id: 'bad', category_id: 'c1', occurred_at: new Date().toISOString() }))
       .rejects.toThrow(NotFoundException);
   });
+
+  it('findAll returns paginated response with meta', async () => {
+    const dto = new QueryTransactionDto();
+    const result = await service.findAll(USER_ID, dto);
+    expect(result).toHaveProperty('data');
+    expect(result).toHaveProperty('meta');
+    expect(result.meta).toMatchObject({ page: 1, limit: 20 });
+  });
 });
 ```
 
@@ -1165,12 +1207,16 @@ cd backend && pnpm test -- transaction.service.spec
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTransactionDto, TransactionType } from './dto/create-transaction.dto';
+import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 @Injectable()
 export class TransactionService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(user_id: string, month?: string) {
+  async findAll(user_id: string, query: QueryTransactionDto) {
+    const { page, limit, sort_by, sort_order, search, month } = query;
+    const skip = (page - 1) * limit;
+
     const where: any = {
       deleted_at: null,
       postings: { some: { wallet: { user_id, deleted_at: null } } },
@@ -1179,11 +1225,29 @@ export class TransactionService {
       const [year, m] = month.split('-').map(Number);
       where.occurred_at = { gte: new Date(year, m - 1, 1), lt: new Date(year, m, 1) };
     }
-    return this.prisma.transaction_event.findMany({
-      where,
-      include: { postings: { include: { wallet: true } }, category: true },
-      orderBy: { occurred_at: 'desc' },
-    });
+    if (search) {
+      where.note = { contains: search, mode: 'insensitive' };
+    }
+
+    const orderBy: any = sort_by === 'amount'
+      ? { postings: { _count: sort_order } }  // proxy sort; real amount sort handled via raw if needed
+      : { [sort_by]: sort_order };
+
+    const [data, total] = await Promise.all([
+      this.prisma.transaction_event.findMany({
+        where,
+        include: { postings: { include: { wallet: true } }, category: true },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.transaction_event.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: { total, page, limit, total_pages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: string, user_id: string) {
@@ -1268,13 +1332,14 @@ import { Controller, Get, Post, Delete, Param, Body, Query, UseGuards, Request }
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 @Controller('transactions')
 @UseGuards(JwtAuthGuard)
 export class TransactionController {
   constructor(private tx: TransactionService) {}
 
-  @Get() findAll(@Request() req: any, @Query('month') month?: string) { return this.tx.findAll(req.user.id, month); }
+  @Get() findAll(@Request() req: any, @Query() query: QueryTransactionDto) { return this.tx.findAll(req.user.id, query); }
   @Get(':id') findOne(@Param('id') id: string, @Request() req: any) { return this.tx.findOne(id, req.user.id); }
   @Post() create(@Body() dto: CreateTransactionDto, @Request() req: any) { return this.tx.create(req.user.id, dto); }
   @Delete(':id') softDelete(@Param('id') id: string, @Request() req: any) { return this.tx.softDelete(id, req.user.id); }
@@ -1738,6 +1803,10 @@ export interface DashboardSummary {
   expense_by_category: { name: string; amount: number }[];
   month: string;
 }
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: { total: number; page: number; limit: number; total_pages: number };
+}
 ```
 
 - [ ] **Step 2: Create shared/api/api-client.ts**
@@ -1781,14 +1850,31 @@ export function useAuth() {
 
 - [ ] **Step 4: Update main.tsx**
 
+`create-tsrouter-app` already wires up `RouterProvider`. Extend it to pass an `auth` context so routes can access auth state via `router.context.auth`:
+
 ```tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { routeTree } from './routeTree.gen';
+import { useAuth } from './shared/hooks/use-auth';
+
+const router = createRouter({
+  routeTree,
+  context: { auth: undefined! },  // will be injected below
+});
+
+declare module '@tanstack/react-router' {
+  interface Register { router: typeof router }
+}
+
+function App() {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>
+  <React.StrictMode><App /></React.StrictMode>
 );
 ```
 
@@ -1803,12 +1889,27 @@ git commit -m "feat(frontend): add API client, shared types, and auth hook"
 
 ### Task 16: Auth Module + Routing (Frontend)
 
+TanStack Router uses **file-based routing**. Route files live in `src/routes/`. The router plugin scans this directory and auto-generates `src/routeTree.gen.ts` on every save — never edit that file manually.
+
+Route file naming conventions used here:
+- `__root.tsx` — root route, wraps the entire app
+- `login.tsx` → `/login`
+- `_app.tsx` — pathless layout route (underscore prefix = no URL segment); enforces auth via `beforeLoad`
+- `_app/index.tsx` → `/` (dashboard)
+- `_app/wallets.tsx` → `/wallets`
+- etc.
+
 **Files:**
 - Create: `frontend/src/modules/auth/services/auth.service.ts`
-- Create: `frontend/src/modules/auth/components/LoginPage.tsx`
-- Create: `frontend/src/shared/components/ProtectedRoute.tsx`
-- Create: `frontend/src/shared/components/Layout.tsx`
-- Modify: `frontend/src/App.tsx`
+- Modify: `frontend/src/routes/__root.tsx`
+- Create: `frontend/src/routes/login.tsx`
+- Create: `frontend/src/routes/_app.tsx`
+- Create: `frontend/src/routes/_app/index.tsx`
+- Create: `frontend/src/routes/_app/wallets.tsx`
+- Create: `frontend/src/routes/_app/categories.tsx`
+- Create: `frontend/src/routes/_app/transactions.tsx`
+- Create: `frontend/src/routes/_app/ai.tsx`
+- Create: `frontend/src/shared/components/AppLayout.tsx`
 
 - [ ] **Step 1: Create auth/services/auth.service.ts**
 
@@ -1821,28 +1922,54 @@ export const authService = {
 };
 ```
 
-- [ ] **Step 2: Create auth/components/LoginPage.tsx**
+- [ ] **Step 2: Update src/routes/__root.tsx**
+
+The root route provides the router context type and renders the app shell:
 
 ```tsx
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/auth.service';
-import { useAuth } from '../../../shared/hooks/use-auth';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
+import type { useAuth } from '../shared/hooks/use-auth';
 
-export default function LoginPage() {
+interface RouterContext {
+  auth: ReturnType<typeof useAuth>;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: () => <Outlet />,
+});
+```
+
+- [ ] **Step 3: Create src/routes/login.tsx**
+
+```tsx
+import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { useState } from 'react';
+import { authService } from '../modules/auth/services/auth.service';
+
+export const Route = createFileRoute('/login')({
+  beforeLoad: ({ context }) => {
+    if (context.auth.isAuthenticated) {
+      throw Route.redirect({ to: '/' });
+    }
+  },
+  component: LoginPage,
+});
+
+function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { auth } = Route.useRouteContext();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
       const { data } = await authService.login(email, password);
-      login(data.access_token);
-      navigate('/');
+      auth.login(data.access_token);
+      await router.invalidate();
+      router.navigate({ to: '/' });
     } catch { setError('Invalid email or password'); }
   };
 
@@ -1860,29 +1987,22 @@ export default function LoginPage() {
 }
 ```
 
-- [ ] **Step 3: Create shared/components/ProtectedRoute.tsx**
+- [ ] **Step 4: Create src/shared/components/AppLayout.tsx**
 
 ```tsx
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/use-auth';
-
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-}
-```
-
-- [ ] **Step 4: Create shared/components/Layout.tsx**
-
-```tsx
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useRouter } from '@tanstack/react-router';
 import { authService } from '../../modules/auth/services/auth.service';
-import { useAuth } from '../hooks/use-auth';
 
-export default function Layout() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  const handleLogout = async () => { await authService.logout(); logout(); navigate('/login'); };
+interface Props { onLogout: () => void; }
+
+export default function AppLayout({ onLogout }: Props) {
+  const router = useRouter();
+  const handleLogout = async () => {
+    await authService.logout();
+    onLogout();
+    await router.invalidate();
+    router.navigate({ to: '/login' });
+  };
 
   return (
     <div>
@@ -1900,42 +2020,66 @@ export default function Layout() {
 }
 ```
 
-- [ ] **Step 5: Update App.tsx with full routing**
+- [ ] **Step 5: Create src/routes/_app.tsx (pathless auth guard + layout)**
 
 ```tsx
-import { Routes, Route } from 'react-router-dom';
-import LoginPage from './modules/auth/components/LoginPage';
-import ProtectedRoute from './shared/components/ProtectedRoute';
-import Layout from './shared/components/Layout';
-import DashboardPage from './modules/dashboard/components/DashboardPage';
-import WalletPage from './modules/wallet/components/WalletPage';
-import CategoryPage from './modules/category/components/CategoryPage';
-import TransactionPage from './modules/transaction/components/TransactionPage';
-import AiChatPage from './modules/ai/components/AiChatPage';
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import AppLayout from '../shared/components/AppLayout';
 
-export default function App() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<DashboardPage />} />
-        <Route path="wallets" element={<WalletPage />} />
-        <Route path="categories" element={<CategoryPage />} />
-        <Route path="transactions" element={<TransactionPage />} />
-        <Route path="ai" element={<AiChatPage />} />
-      </Route>
-    </Routes>
-  );
-}
+export const Route = createFileRoute('/_app')({
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isAuthenticated) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: () => {
+    const { auth } = Route.useRouteContext();
+    return <AppLayout onLogout={auth.logout} />;
+  },
+});
 ```
 
-Stub all page components with `export default function XPage() { return <div>X</div>; }` so the app compiles.
+- [ ] **Step 6: Create child route stubs**
 
-- [ ] **Step 6: Commit**
+Create each file with a stub component so the app compiles. Replace stubs with real pages in later tasks.
+
+```tsx
+// src/routes/_app/index.tsx
+import { createFileRoute } from '@tanstack/react-router';
+export const Route = createFileRoute('/_app/')({
+  component: () => <div>Dashboard</div>,
+});
+
+// src/routes/_app/wallets.tsx
+import { createFileRoute } from '@tanstack/react-router';
+export const Route = createFileRoute('/_app/wallets')({
+  component: () => <div>Wallets</div>,
+});
+
+// src/routes/_app/categories.tsx
+import { createFileRoute } from '@tanstack/react-router';
+export const Route = createFileRoute('/_app/categories')({
+  component: () => <div>Categories</div>,
+});
+
+// src/routes/_app/transactions.tsx
+import { createFileRoute } from '@tanstack/react-router';
+export const Route = createFileRoute('/_app/transactions')({
+  component: () => <div>Transactions</div>,
+});
+
+// src/routes/_app/ai.tsx
+import { createFileRoute } from '@tanstack/react-router';
+export const Route = createFileRoute('/_app/ai')({
+  component: () => <div>AI Assistant</div>,
+});
+```
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/modules/auth/ frontend/src/shared/components/ frontend/src/App.tsx
-git commit -m "feat(frontend): add auth, layout, and routing"
+git add frontend/src/routes/ frontend/src/modules/auth/ frontend/src/shared/components/
+git commit -m "feat(frontend): add auth, layout, and TanStack Router file-based routing"
 ```
 
 ---
@@ -1988,6 +2132,12 @@ export function useWallets() {
 }
 ```
 
+- [ ] **Step 3: Create WalletTable.tsx (desktop) and WalletCards.tsx (mobile)**
+
+**WalletTable** (desktop, `hidden md:block`): TanStack Table with client-side sorting and global filter. Columns: name, type, balance, actions (Delete). Column headers are clickable to toggle sort. A search input above the table filters all columns client-side.
+
+**WalletCards** (mobile, `block md:hidden`): each wallet as a card showing name, type, balance, and a Delete button.
+
 - [ ] **Step 3: Create WalletForm.tsx**
 
 ```tsx
@@ -2026,87 +2176,57 @@ export default function WalletForm({ onSuccess, onCancel }: Props) {
 }
 ```
 
-- [ ] **Step 4: Create WalletList.tsx**
+- [ ] **Step 4: Create WalletPage.tsx**
+
+Renders a toolbar (search input, "Add Wallet" button) and then `WalletTable` (desktop) + `WalletCards` (mobile). The `useWallets()` hook fetches all wallets once; TanStack Table handles client-side filtering and sorting. On delete, call `refetch()`.
+
+- [ ] **Step 5: Wire up route**
+
+Replace the stub in `src/routes/_app/wallets.tsx`:
 
 ```tsx
-import type { Wallet } from '../../../shared/types';
-import { walletService } from '../services/wallet.service';
-
-interface Props { wallets: Wallet[]; onDelete: () => void; }
-
-export default function WalletList({ wallets, onDelete }: Props) {
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this wallet?')) return;
-    await walletService.delete(id);
-    onDelete();
-  };
-
-  if (wallets.length === 0) return <p>No wallets yet.</p>;
-
-  return (
-    <ul>
-      {wallets.map((w) => (
-        <li key={w.id}>
-          <strong>{w.name}</strong> ({w.type}) — Balance: {w.balance}
-          <button onClick={() => handleDelete(w.id)} style={{ marginLeft: 8 }}>Delete</button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-```
-
-- [ ] **Step 5: Create WalletPage.tsx**
-
-```tsx
-import { useState } from 'react';
-import { useWallets } from '../hooks/use-wallets';
-import WalletList from './WalletList';
-import WalletForm from './WalletForm';
-
-export default function WalletPage() {
-  const { wallets, loading, refetch } = useWallets();
-  const [showForm, setShowForm] = useState(false);
-
-  if (loading) return <div>Loading...</div>;
-
-  return (
-    <div>
-      <h2>Wallets</h2>
-      <button onClick={() => setShowForm(true)}>+ Add Wallet</button>
-      {showForm && <WalletForm onSuccess={() => { setShowForm(false); refetch(); }} onCancel={() => setShowForm(false)} />}
-      <WalletList wallets={wallets} onDelete={refetch} />
-    </div>
-  );
-}
+import { createFileRoute } from '@tanstack/react-router';
+import WalletPage from '../../modules/wallet/components/WalletPage';
+export const Route = createFileRoute('/_app/wallets')({ component: WalletPage });
 ```
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/src/modules/wallet/
-git commit -m "feat(frontend): add wallet module"
+git add frontend/src/modules/wallet/ frontend/src/routes/_app/wallets.tsx
+git commit -m "feat(frontend): add wallet module with client-side data table"
 ```
 
 ---
 
 ### Task 18: Category Module (Frontend)
 
-Follow the exact same pattern as Task 17. Key differences:
+Follow the exact same pattern as Task 17 (client-side TanStack Table + mobile cards). Key differences:
 - `CategoryForm` fields: `name` (text), `description` (text, optional), `type` (select: `expense` | `income`)
-- `CategoryList` groups categories by type under "Expense Categories" / "Income Categories" headings
+- `CategoryTable` columns: name, type badge, description, actions. Client-side sort and search.
+- `CategoryCards` groups cards under "Expense" / "Income" type sections.
 - Service: `categoryService` hitting `/categories` endpoints
 
 - [ ] **Step 1: Create category/services/category.service.ts**
 - [ ] **Step 2: Create category/hooks/use-categories.ts** — export `useCategories()` with same shape as `useWallets()`
 - [ ] **Step 3: Create CategoryForm.tsx** — name, description (optional), type fields
-- [ ] **Step 4: Create CategoryList.tsx** — grouped by type
+- [ ] **Step 4: Create CategoryTable.tsx (desktop) and CategoryCards.tsx (mobile)** — client-side sort/search via TanStack Table
 - [ ] **Step 5: Create CategoryPage.tsx**
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Wire up route**
+
+Replace the stub in `src/routes/_app/categories.tsx`:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router';
+import CategoryPage from '../../modules/category/components/CategoryPage';
+export const Route = createFileRoute('/_app/categories')({ component: CategoryPage });
+```
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/modules/category/
-git commit -m "feat(frontend): add category module"
+git add frontend/src/modules/category/ frontend/src/routes/_app/categories.tsx
+git commit -m "feat(frontend): add category module with client-side data table"
 ```
 
 ---
@@ -2117,14 +2237,15 @@ git commit -m "feat(frontend): add category module"
 - Create: `frontend/src/modules/transaction/services/transaction.service.ts`
 - Create: `frontend/src/modules/transaction/hooks/use-transactions.ts`
 - Create: `frontend/src/modules/transaction/components/TransactionForm.tsx`
-- Create: `frontend/src/modules/transaction/components/TransactionList.tsx`
+- Create: `frontend/src/modules/transaction/components/TransactionTable.tsx`
+- Create: `frontend/src/modules/transaction/components/TransactionCards.tsx`
 - Create: `frontend/src/modules/transaction/components/TransactionPage.tsx`
 
 - [ ] **Step 1: Create transaction/services/transaction.service.ts**
 
 ```typescript
 import { apiClient } from '../../../shared/api/api-client';
-import type { Transaction } from '../../../shared/types';
+import type { Transaction, PaginatedResponse } from '../../../shared/types';
 
 export interface CreateTransactionPayload {
   type: 'expense' | 'income' | 'transfer';
@@ -2136,8 +2257,18 @@ export interface CreateTransactionPayload {
   occurred_at: string;
 }
 
+export interface TransactionQuery {
+  page?: number;
+  limit?: number;
+  sort_by?: 'occurred_at' | 'amount' | 'type';
+  sort_order?: 'asc' | 'desc';
+  search?: string;
+  month?: string;
+}
+
 export const transactionService = {
-  getAll: (month?: string) => apiClient.get<Transaction[]>('/transactions', { params: month ? { month } : {} }),
+  getAll: (query: TransactionQuery = {}) =>
+    apiClient.get<PaginatedResponse<Transaction>>('/transactions', { params: query }),
   create: (data: CreateTransactionPayload) => apiClient.post<Transaction>('/transactions', data),
   delete: (id: string) => apiClient.delete(`/transactions/${id}`),
 };
@@ -2147,22 +2278,29 @@ export const transactionService = {
 
 ```typescript
 import { useState, useEffect } from 'react';
-import { transactionService } from '../services/transaction.service';
-import type { Transaction } from '../../../shared/types';
+import { transactionService, type TransactionQuery } from '../services/transaction.service';
+import type { Transaction, PaginatedResponse } from '../../../shared/types';
 
-export function useTransactions(month?: string) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+export function useTransactions(query: TransactionQuery = {}) {
+  const [result, setResult] = useState<PaginatedResponse<Transaction>>({
+    data: [],
+    meta: { total: 0, page: 1, limit: 20, total_pages: 0 },
+  });
   const [loading, setLoading] = useState(true);
 
   const refetch = async () => {
     setLoading(true);
-    const { data } = await transactionService.getAll(month);
-    setTransactions(data);
+    const { data } = await transactionService.getAll(query);
+    setResult(data);
     setLoading(false);
   };
 
-  useEffect(() => { refetch(); }, [month]);
-  return { transactions, loading, refetch };
+  // Re-fetch whenever any query param changes
+  useEffect(() => { refetch(); }, [
+    query.page, query.limit, query.sort_by, query.sort_order, query.search, query.month,
+  ]);
+
+  return { transactions: result.data, meta: result.meta, loading, refetch };
 }
 ```
 
@@ -2179,22 +2317,39 @@ Form fields:
 
 Accept `wallets: Wallet[]` and `categories: Category[]` as props. On submit, call `transactionService.create(...)` and invoke `onSuccess`.
 
-- [ ] **Step 4: Create TransactionList.tsx**
+- [ ] **Step 4: Create TransactionTable.tsx (desktop) and TransactionCards.tsx (mobile)**
 
-Display each transaction showing: date, type badge, amount (absolute value), wallet name(s) from postings, category name, note. Include a Delete button with `confirm()` dialog.
+**TransactionTable** (desktop, `hidden md:block`): TanStack Table instance with columns: date (`occurred_at`), type badge, amount, wallet(s), category, note, actions. Clicking a column header cycles sort asc → desc → none and fires a query param update (server-side). Search input debounced 300 ms before triggering re-fetch.
+
+**TransactionCards** (mobile, `block md:hidden`): renders each transaction as a card showing the same fields. No inline sort controls; a sort dropdown and search input appear above the card list.
+
+Both components receive `transactions`, `meta`, and callbacks for sort/search/page changes. Neither manages its own data — all state lives in `TransactionPage`.
 
 - [ ] **Step 5: Create TransactionPage.tsx**
 
-- Month selector (`<input type="month">`) defaulting to current month
-- Fetch wallets and categories to pass to `TransactionForm`
-- "Add Transaction" button → shows `TransactionForm`
-- `TransactionList` below
+Owns all server-side query state: `page`, `limit` (20), `sort_by`, `sort_order`, `search`, `month`.
 
-- [ ] **Step 6: Commit**
+Layout:
+- Toolbar row: month selector (`<input type="month">`), search input (debounced), "Add Transaction" button.
+- `TransactionTable` (desktop) / `TransactionCards` (mobile) receiving query state and callbacks.
+- Pagination controls below the table: Previous / Next buttons, current page indicator, total count.
+- `TransactionForm` modal triggered by the "Add Transaction" button; on success, resets to page 1 and refetches.
+
+- [ ] **Step 6: Wire up route**
+
+Replace the stub in `src/routes/_app/transactions.tsx`:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router';
+import TransactionPage from '../../modules/transaction/components/TransactionPage';
+export const Route = createFileRoute('/_app/transactions')({ component: TransactionPage });
+```
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/modules/transaction/
-git commit -m "feat(frontend): add transaction module"
+git add frontend/src/modules/transaction/ frontend/src/routes/_app/transactions.tsx
+git commit -m "feat(frontend): add transaction module with server-side data table"
 ```
 
 ---
@@ -2282,10 +2437,20 @@ export default function DashboardPage() {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Wire up route**
+
+Replace the stub in `src/routes/_app/index.tsx`:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router';
+import DashboardPage from '../../modules/dashboard/components/DashboardPage';
+export const Route = createFileRoute('/_app/')({ component: DashboardPage });
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/src/modules/dashboard/
+git add frontend/src/modules/dashboard/ frontend/src/routes/_app/index.tsx
 git commit -m "feat(frontend): add dashboard module with pie chart"
 ```
 
@@ -2434,10 +2599,20 @@ export default function AiChatPage() {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Wire up route**
+
+Replace the stub in `src/routes/_app/ai.tsx`:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router';
+import AiChatPage from '../../modules/ai/components/AiChatPage';
+export const Route = createFileRoute('/_app/ai')({ component: AiChatPage });
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/src/modules/ai/
+git add frontend/src/modules/ai/ frontend/src/routes/_app/ai.tsx
 git commit -m "feat(frontend): add AI chat module with confirmation card"
 ```
 

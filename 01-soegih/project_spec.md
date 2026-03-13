@@ -26,7 +26,7 @@ Manages wallets, expense/income categories, and transactions (expense, income, t
 
 | Layer | Choice |
 |---|---|
-| Frontend | React + Vite (CSR), served by nginx |
+| Frontend | React + Vite (CSR), served by nginx; TanStack Router (file-based); TanStack Table for data tables |
 | Backend | NestJS + TypeScript |
 | AI Service | Python FastAPI + LangChain |
 | ORM | Prisma |
@@ -37,7 +37,23 @@ Manages wallets, expense/income categories, and transactions (expense, income, t
 | Reverse proxy | Caddy (auto HTTPS) |
 | Deployment | Docker Compose on VPS |
 
-### 2. Data Flow
+### 2. UI/UX Design Principles
+
+**Responsive strategy:** Desktop-first. All views are fully usable on mobile and tablet.
+
+**Desktop view — data tables:**
+All list views (wallets, categories, transactions) render as sortable data tables.
+- Clicking a column header toggles sort asc → desc → none.
+- Each table has a search input and pagination controls.
+- **Wallets & categories:** all records returned in a single API response; sorting, filtering, and pagination handled client-side via TanStack Table.
+- **Transactions:** records are potentially large; sorting, searching, and pagination are handled server-side. The frontend sends `page`, `limit`, `sort_by`, `sort_order`, and `search` as query parameters and renders the returned page of data.
+
+**Mobile/tablet view — cards:**
+List items render as cards following modern mobile conventions (e.g., name prominent, secondary details below, action buttons accessible via tap). The same client-side vs. server-side data handling rules apply.
+
+---
+
+### 3. Data Flow
 
 **Standard request flow:**
 ```
@@ -61,7 +77,7 @@ Browser → Caddy → NestJS (/api/v1/ai/chat)
 User confirms → NestJS creates transaction (standard flow)
 ```
 
-### 3. Project Structure
+### 4. Project Structure
 
 ```
 soegih/
@@ -99,7 +115,7 @@ soegih/
 
 Docker Compose containers: `caddy`, `frontend` (nginx), `backend` (NestJS), `ai` (FastAPI).
 
-### 4. Data Schema
+### 5. Data Schema
 
 ```
 users
@@ -151,7 +167,7 @@ posting
 
 All tables use soft deletion (`deleted_at`). Uniqueness is enforced via partial indexes scoped to non-deleted rows.
 
-### 5. API Design
+### 6. API Design
 
 All endpoints are prefixed with `/api/v1/`. `PATCH` is used for partial updates. `DELETE` performs soft deletion.
 
@@ -175,7 +191,7 @@ PATCH  /api/v1/categories/:id
 DELETE /api/v1/categories/:id
 
 Transactions
-GET    /api/v1/transactions          -- supports ?month=YYYY-MM for filtering
+GET    /api/v1/transactions          -- server-side: ?page=1&limit=20&sort_by=occurred_at&sort_order=desc&search=<text>&month=YYYY-MM
 POST   /api/v1/transactions
 GET    /api/v1/transactions/:id
 PATCH  /api/v1/transactions/:id
@@ -189,7 +205,24 @@ POST   /api/v1/ai/chat
 POST   /api/v1/ai/chat/confirm       -- triggers real transaction creation
 ```
 
-### 6. Logging Format
+**Paginated response format** (used by `GET /api/v1/transactions`):
+
+```json
+{
+  "data": [ /* array of transaction objects */ ],
+  "meta": {
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "total_pages": 8
+  }
+}
+```
+
+Sortable fields for transactions: `occurred_at`, `amount`, `type`. Default: `sort_by=occurred_at&sort_order=desc`.
+`search` matches against the transaction `note` field (case-insensitive substring).
+
+### 7. Logging Format
 
 Using `nestjs-pino`. Every log line is a JSON object:
 
@@ -210,7 +243,7 @@ Using `nestjs-pino`. Every log line is a JSON object:
 - `user_id`: attached once JWT is verified, omitted on auth routes
 - Error logs additionally include `err.message` and `err.stack`
 
-### 7. Naming Convention
+### 8. Naming Convention
 
 | Layer | Convention | Example |
 |---|---|---|

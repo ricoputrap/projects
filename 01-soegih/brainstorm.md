@@ -18,6 +18,14 @@ Build a personal finance management web app for tracking all of my expenses, inc
 6. User can use AI for tracking their expenses/income by writing it in a plain text naturally in English.
 7. User can see a simple dashboard displaying the total expense & income in the current month, the total net worth over time (total amount of money in all wallets), a simple pie chart displaying the expense distribution (based on the category).
 
+### UI Design Preferences (applies to MVP and beyond)
+
+- **Desktop-first** layout, fully responsive down to tablet and mobile.
+- **Desktop view**: wallets, categories, and transactions are displayed as data tables with column header click-to-sort, search, and pagination.
+  - Wallets & categories: client-side sorting, filtering, and pagination (all data returned in one API response).
+  - Transactions: server-side sorting, searching, and pagination (query params sent to backend on each interaction).
+- **Mobile view**: list items displayed as cards following modern mobile design conventions. Same client-side vs. server-side data handling rules as desktop.
+
 ### V1
 
 1. User can define budgets for some or all their expense categories.
